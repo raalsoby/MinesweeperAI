@@ -21,7 +21,7 @@ public class Minesweeper extends Applet implements Runnable {
   int height = 16;			/* height in squares */
   int topLeft = 0;
   int topRight = width-1;
-  int botLeft = width*height-width-1;
+  int botLeft = width*height-width;
   int botRight = width*height-1;
   int nearFlagCount = 0;
   int nearUnexCount = 0;
@@ -34,7 +34,7 @@ public class Minesweeper extends Applet implements Runnable {
   final int bRow = 7;
   final int bRight = 8;
   final int rest = 0;
-  
+  int count = 0;
   int mines = 40;			/* number of mines */
   int scoreHeight = 48;			/* pixels at top used for scores */
   int faceSize = 32;			/* pixels size of smiley face */
@@ -515,16 +515,27 @@ public class Minesweeper extends Applet implements Runnable {
 	  for (int i = 0; i < width*height; i++) {
 		  utility[i] = 0;
 	    };
-	    
+  
 	  // expose a random first block
 	    // TO DO : ADD A CHECK FOR FLAGGED
-	  expose((int)(Math.random()*16), (int)(Math.random()*16));
+	    int i = 0;
+	  while(count < 5){
+		 int t1 = (int)(Math.random()*16);
+		 int t2 = (int)(Math.random()*16);
+	  if(exposed[t1+t2*width]!= flagged) {expose(t1,t2); count++;}
+	  }
 	  int countRep = 0;
-	  while(countRep <= 10){
+	  int countListEnd = 0;
+	  int countUneXpos = 0;
+	  while(countRep < 1){
 		  countRep++;
 		// update global utilities
-		  for(int i = 0; i < width*height; i++){
-			if(exposed[i] == listEnd) {
+		  for(i = 0; i < width*height; i++){
+			if(exposed[i] == listEnd || exposed[i] == unexposed || exposed[i] >= 0) {
+//				count ++;
+//				if(exposed[i] == listEnd) countListEnd++;
+//				else if(exposed[i] == unexposed) countUneXpos++;
+//				else System.out.println("hi: " + exposed[i]);
 					utility[i] = 1; 
 					// left-top-corner
 					if(i== topLeft){
@@ -590,7 +601,10 @@ public class Minesweeper extends Applet implements Runnable {
 						
 				} // IF-STATEMENT
 			} // CALCULATED UTILITIES
-		  
+		  System.out.println("There are " + count + " blocks open" );
+		  System.out.println("There are " + countUneXpos + " unexposed blocks" );
+
+		  System.out.println("There are " + countListEnd + " listend blocks" );
 		  // choose best one
 		  // play it
 		  
