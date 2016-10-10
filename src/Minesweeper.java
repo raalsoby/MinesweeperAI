@@ -35,7 +35,7 @@ public class Minesweeper extends Applet implements Runnable {
   final int bRight = 8;
   final int rest = 0;
   int count = 0;
-  int mines = 40;			/* number of mines */
+  int mines = 15;			/* number of mines */
   int scoreHeight = 48;			/* pixels at top used for scores */
   int faceSize = 32;			/* pixels size of smiley face */
 
@@ -519,15 +519,16 @@ public class Minesweeper extends Applet implements Runnable {
 	  // expose a random first block
 	    // TO DO : ADD A CHECK FOR FLAGGED
 	    int i = 0;
-	  while(count < 5){
-		 int t1 = (int)(Math.random()*16);
-		 int t2 = (int)(Math.random()*16);
+	  while(count < 1){
+		 int t1 = (int)(Math.random()*width);
+		 int t2 = (int)(Math.random()*height);
 	  if(exposed[t1+t2*width]!= flagged) {expose(t1,t2); count++;}
 	  }
 	  int countRep = 0;
 	  int countListEnd = 0;
 	  int countUneXpos = 0;
-	  while(countRep < 1){
+	  boolean moveMade = false;
+	  while(sadness == bored){
 		  countRep++;
 		// update global utilities
 		  for(i = 0; i < width*height; i++){
@@ -592,18 +593,30 @@ public class Minesweeper extends Applet implements Runnable {
 					
 					if(nearFlagCount == adjacent[i]  ){
 						exposeNearby(i, state);
+						moveMade = true;
 					}
 					else if(nearFlagCount < adjacent[i]){
 						if(nearFlagCount + nearUnexCount == adjacent[i]){
 							flagNearby(i, state);
-						}
+							moveMade = true;
+					}
+
 					}
 						
 				} // IF-STATEMENT
 			} // CALCULATED UTILITIES
+			// Else do something random
+			if(!moveMade){
+				count = 0;
+				while(count < 1){
+					 int t3 = (int)(Math.random()*height);
+					 int t4 = (int)(Math.random()*width);
+					 if(exposed[t3+t4*width] == unexposed) 
+					 	{expose(t4,t3); count++;}
+				}
+										}
 		  System.out.println("There are " + count + " blocks open" );
 		  System.out.println("There are " + countUneXpos + " unexposed blocks" );
-
 		  System.out.println("There are " + countListEnd + " listend blocks" );
 		  // choose best one
 		  // play it
@@ -669,35 +682,35 @@ public class Minesweeper extends Applet implements Runnable {
 	public void exposeNearby(int index, int state){
 		// check above-left
 		if(state!=tLeft && state!= tRow && state!=tRight && state!= lCol && state != bLeft){	
-			if(exposed[index-height-1] == -4) easyExpose(index-height-1);
+			if(exposed[index-height-1] == -4) {if(adjacent[index-height-1] != 9) easyExpose(index-height-1);}
 		}
 		// check above
 		if(state!=tLeft && state!= tRow && state!=tRight){	
-			if(exposed[index-height] == -4) easyExpose(index-height);
+			if(exposed[index-height] == -4) {if(adjacent[index-height] != 9)  easyExpose(index-height);}
 		}
 		// check above-right
 		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
-			if(exposed[index-height+1] == -4) easyExpose(index-height+1);
+			if(exposed[index-height+1] == -4) {if(adjacent[index-height+1] != 9)  easyExpose(index-height+1);}
 		}
 		// check left
 		if(state!=tLeft && state!= lCol && state!=bLeft){	
-			if(exposed[index-1] == -4) easyExpose(index-1);
+			if(exposed[index-1] == -4) {if(adjacent[index-1] != 9)  easyExpose(index-1);}
 		}
 		// check right
 		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
-			if(exposed[index+1] == -4) easyExpose(index+1);
+			if(exposed[index+1] == -4) {if(adjacent[index+1] != 9)  easyExpose(index+1);}
 		}
 		// check bottom-left
 		if(state!=tLeft && state!= lCol && state!=bLeft && state!=bRow && state != bRight){	
-			if(exposed[index+height-1] == -4) easyExpose(index+height-1);
+			if(exposed[index+height-1] == -4) {if(adjacent[index+height-1] != 9)  easyExpose(index+height-1);}
 		}
 		// check bottom
 		if(state!=bLeft && state!= bRow && state!=bRight){	
-			if(exposed[index+height] == -4) easyExpose(index+height);
+			if(exposed[index+height] == -4) {if(adjacent[index+height] != 9)  easyExpose(index+height);}
 		}
 		// check bottom-right
 		if(state!=bLeft && state!= bRow && state!=bRight && state!=rCol && state != tRight){	
-			if(exposed[index+height+1] == -4) easyExpose(index+height+1);
+			if(exposed[index+height+1] == -4) {if(adjacent[index+height+1] != 9)  easyExpose(index+height+1);}
 		}
 		
 		
