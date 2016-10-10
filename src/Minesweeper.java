@@ -51,6 +51,7 @@ public class Minesweeper extends Applet implements Runnable {
 	int[] adjacent = null; /* count of adjacent mines */
 	static final int mine = 9; /* adjacency count for mine */
 	int[] utility = null;
+	int[] alExposed = null; 
 	/*
 	 * "exposed" contains the exposure state of the board. Values > "unexposed"
 	 * represent exposed squares; these either have the distinquished values
@@ -124,9 +125,12 @@ public class Minesweeper extends Applet implements Runnable {
 			adjacent = new int[width * height];
 		if (exposed == null)
 			exposed = new int[width * height];
+		if (alExposed == null)
+			alExposed = new int[width * height];
 		for (int i = 0; i < width * height; i++) {
 			adjacent[i] = 0;
 			exposed[i] = unexposed;
+			alExposed[i] = 0;
 		}
 		;
 		int laid = 0;
@@ -566,7 +570,7 @@ public class Minesweeper extends Applet implements Runnable {
 		boolean moveMade = true;
 		
 		// loop until game is done
-		while (sadness == bored && moveMade && countRep < 10) {
+		while (sadness == bored && moveMade) {
 			moveMade = false;
 			countRep++;
 			for (i = 0; i < width * height; i++) {
@@ -622,7 +626,10 @@ public class Minesweeper extends Applet implements Runnable {
 					// if all bombs nearby are flagged
 					if (nearFlagCount == adjacent[i]) {
 						exposeNearby(i, state);
-						moveMade = true;
+						if(alExposed[i] == 0){ 
+							moveMade = true;
+							alExposed[i] = 1;
+						}
 					} 
 					// if we need more flags
 					else if (nearFlagCount < adjacent[i]) {
