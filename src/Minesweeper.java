@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Minesweeper extends Applet implements Runnable {
 
+
 	/* */
 	/*
 	 * State information, generally protected by our mutex /*
