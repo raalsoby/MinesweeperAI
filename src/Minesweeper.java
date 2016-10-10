@@ -529,6 +529,7 @@ public class Minesweeper extends Applet implements Runnable {
 	  int countUneXpos = 0;
 	  boolean moveMade = false;
 	  while(sadness == bored){
+	      moveMade = false;
 		  countRep++;
 		// update global utilities
 		  for(i = 0; i < width*height; i++){
@@ -601,23 +602,28 @@ public class Minesweeper extends Applet implements Runnable {
 							moveMade = true;
 					}
 
+					break;
+
 					}
 						
 				} // IF-STATEMENT
 			} // CALCULATED UTILITIES
 			// Else do something random
 			if(!moveMade){
+			  System.out.println("In the not move made if statement");
 				count = 0;
 				while(count < 1){
 					 int t3 = (int)(Math.random()*height);
 					 int t4 = (int)(Math.random()*width);
 					 if(exposed[t3+t4*width] == unexposed) 
-					 	{expose(t4,t3); count++;}
+					 	{expose(t4,t3); count++;
+					 	System.out.println("In random thing");}
 				}
-										}
+			}
 		  System.out.println("There are " + count + " blocks open" );
-		  System.out.println("There are " + countUneXpos + " unexposed blocks" );
-		  System.out.println("There are " + countListEnd + " listend blocks" );
+//		  System.out.println("There are " + countUneXpos + " unexposed blocks" );
+//		  System.out.println("There are " + countListEnd + " listend blocks" );
+//        System.out.println("I is: " + i + "\n");
 		  // choose best one
 		  // play it
 		  
@@ -656,7 +662,7 @@ public class Minesweeper extends Applet implements Runnable {
 			else if(exposed[index-1] == -5) nearFlagCount ++;
 		}
 		// check right
-		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+		if(state!=tRight && state!=rCol && state != bRight){
 			if(exposed[index+1] == -4) nearUnexCount ++;
 			else if(exposed[index+1] == -5) nearFlagCount ++;
 		}
@@ -682,35 +688,35 @@ public class Minesweeper extends Applet implements Runnable {
 	public void exposeNearby(int index, int state){
 		// check above-left
 		if(state!=tLeft && state!= tRow && state!=tRight && state!= lCol && state != bLeft){	
-			if(exposed[index-height-1] == -4) {if(adjacent[index-height-1] != 9) easyExpose(index-height-1);}
+			if(exposed[index-height-1] == -4) { easyExpose(index-height-1);}
 		}
 		// check above
 		if(state!=tLeft && state!= tRow && state!=tRight){	
-			if(exposed[index-height] == -4) {if(adjacent[index-height] != 9)  easyExpose(index-height);}
+			if(exposed[index-height] == -4) {  easyExpose(index-height);}
 		}
 		// check above-right
 		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
-			if(exposed[index-height+1] == -4) {if(adjacent[index-height+1] != 9)  easyExpose(index-height+1);}
+			if(exposed[index-height+1] == -4) { easyExpose(index-height+1);}
 		}
 		// check left
 		if(state!=tLeft && state!= lCol && state!=bLeft){	
-			if(exposed[index-1] == -4) {if(adjacent[index-1] != 9)  easyExpose(index-1);}
+			if(exposed[index-1] == -4) { easyExpose(index-1);}
 		}
 		// check right
-		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
-			if(exposed[index+1] == -4) {if(adjacent[index+1] != 9)  easyExpose(index+1);}
+		if(state!=tRight && state!=rCol && state != bRight){
+			if(exposed[index+1] == -4) { easyExpose(index+1);}
 		}
 		// check bottom-left
 		if(state!=tLeft && state!= lCol && state!=bLeft && state!=bRow && state != bRight){	
-			if(exposed[index+height-1] == -4) {if(adjacent[index+height-1] != 9)  easyExpose(index+height-1);}
+			if(exposed[index+height-1] == -4) { easyExpose(index+height-1);}
 		}
 		// check bottom
 		if(state!=bLeft && state!= bRow && state!=bRight){	
-			if(exposed[index+height] == -4) {if(adjacent[index+height] != 9)  easyExpose(index+height);}
+			if(exposed[index+height] == -4) { easyExpose(index+height);}
 		}
 		// check bottom-right
 		if(state!=bLeft && state!= bRow && state!=bRight && state!=rCol && state != tRight){	
-			if(exposed[index+height+1] == -4) {if(adjacent[index+height+1] != 9)  easyExpose(index+height+1);}
+			if(exposed[index+height+1] == -4) { easyExpose(index+height+1);}
 		}
 		
 		
@@ -746,7 +752,7 @@ public class Minesweeper extends Applet implements Runnable {
 			}
 		}
 		// check right
-		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+		if(state!=tRight && state!=rCol && state != bRight){
 			if(exposed[index+1] == -4) {
 				exposed[index+1] = flagged; flags++; paintFlags(getGraphics());
 				easyPaint(index+1);
