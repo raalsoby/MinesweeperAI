@@ -8,6 +8,7 @@
 import java.applet.*;
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Minesweeper extends Applet implements Runnable {
 
@@ -18,6 +19,22 @@ public class Minesweeper extends Applet implements Runnable {
   int edge = 16;			/* pixels on the edge of a square */
   int width = 16;			/* width in squares */
   int height = 16;			/* height in squares */
+  int topLeft = 0;
+  int topRight = width-1;
+  int botLeft = width*height-width-1;
+  int botRight = width*height-1;
+  int nearFlagCount = 0;
+  int nearUnexCount = 0;
+  final int tLeft = 1;
+  final int tRow = 2;
+  final int tRight = 3;
+  final int lCol = 4;
+  final int rCol = 5;
+  final int bLeft = 6;
+  final int bRow = 7;
+  final int bRight = 8;
+  final int rest = 0;
+  
   int mines = 40;			/* number of mines */
   int scoreHeight = 48;			/* pixels at top used for scores */
   int faceSize = 32;			/* pixels size of smiley face */
@@ -29,7 +46,7 @@ public class Minesweeper extends Applet implements Runnable {
      a mine.  */
   int[] adjacent = null;		/* count of adjacent mines */
   static final int mine = 9;		/* adjacency count for mine */
-  
+  int[] utility = null;
   /* "exposed" contains the exposure state of the board.  Values > "unexposed"
      represent exposed squares; these either have the distinquished values
      "exploded" or "incorrect", or some greater value (left over from the
@@ -265,7 +282,7 @@ public class Minesweeper extends Applet implements Runnable {
           int oldElapsed = elapsed;
           elapsed = Math.round((0.0f+(now-startTime))/1000);
           if (elapsed != oldElapsed) paintTime(getGraphics());
-        }
+          }
       }
       try { Thread.sleep(100); } catch (InterruptedException e) { };
     }
@@ -472,7 +489,10 @@ public class Minesweeper extends Applet implements Runnable {
       int x = xCoord/edge;
       int y = (yCoord-scoreHeight)/edge;
       int n = y*width+x;
-      if (evt.shiftDown() || evt.metaDown() ) {
+      if (evt.shiftDown()) {
+    	  simpleBot();
+      }
+      else if (evt.metaDown() ) {
         if (exposed[n] == unexposed) {
           exposed[n] = flagged; flags++; paintFlags(getGraphics());
         } else if (exposed[n] == flagged) {
@@ -483,9 +503,261 @@ public class Minesweeper extends Applet implements Runnable {
         paintSquare(getGraphics(), x, y);
       } else if (exposed[n] != flagged) {
         expose(x, y);
-      };
+      }	;
     };
     return true;
   }
 
-}
+  public void simpleBot(){
+	  int state = 0;
+	  // initialize utility array
+	  if (utility == null) utility = new int[width*height];
+	  for (int i = 0; i < width*height; i++) {
+		  utility[i] = 0;
+	    };
+	    
+	  // expose a random first block
+	    // TO DO : ADD A CHECK FOR FLAGGED
+	  expose((int)(Math.random()*16), (int)(Math.random()*16));
+	  int countRep = 0;
+	  while(countRep <= 10){
+		  countRep++;
+		// update global utilities
+		  for(int i = 0; i < width*height; i++){
+			if(exposed[i] == listEnd) {
+					utility[i] = 1; 
+					// left-top-corner
+					if(i== topLeft){
+						state = tLeft;
+						countNearby(i, state);				
+					}
+					// left-column	
+					else if(i % width == 0 && i != topLeft && i != botLeft){
+						state = lCol;
+						countNearby (i, state);				
+					}
+					// right-column	
+					else if(i % width == width-1 && i != topRight && i != botRight){
+						state = rCol;
+						countNearby (i, state);				
+					}
+						
+					// top-row
+					else if( i > topLeft && i < topRight ){
+						state = tRow;
+						countNearby (i, state);				
+					}
+						
+					// bottom row
+					else if( i > botLeft && i < botRight){
+						state = bRow;
+						countNearby (i, state);				
+					}
+					
+					// right-top-corner
+					else if(i == topRight)
+					{
+						state = tRight;
+						countNearby (i, state);				
+					}
+					// left-bottom-corner
+					else if(i == botLeft){
+						state = bLeft;
+						countNearby (i, state);				
+					}
+	
+	
+					// right-bottom-corner
+					else if(i == botRight){
+						state = bRight;
+						countNearby (i, state);				
+					}
+					
+					// rest of the Board
+					else{
+						state = rest;
+						countNearby (i, state);				
+					}
+					
+					if(nearFlagCount == adjacent[i]  ){
+						exposeNearby(i, state);
+					}
+					else if(nearFlagCount < adjacent[i]){
+						if(nearFlagCount + nearUnexCount == adjacent[i]){
+							flagNearby(i, state);
+						}
+					}
+						
+				} // IF-STATEMENT
+			} // CALCULATED UTILITIES
+		  
+		  // choose best one
+		  // play it
+		  
+		  
+		  } // WHILE-LOOP
+
+	  }
+	  
+	  //	expose(i,2*i-1); paintSquare(getGraphics(), i, 2*i-1);
+	  //	if(exposed[2*i] != flagged) {exposed[2*i] = flagged; flags++; paintFlags(getGraphics());}
+	  //	paintSquare(getGraphics(), (2*i)%16,(int)(2*i)/16);  
+
+  
+	public void countNearby(int index, int state){
+
+		nearFlagCount = 0;
+		nearUnexCount = 0;
+		// check above-left
+		if(state!=tLeft && state!= tRow && state!=tRight && state!= lCol && state != bLeft){	
+			if(exposed[index-height-1] == -4) nearUnexCount ++;
+			else if(exposed[index-height-1] == -5) nearFlagCount ++;
+		}
+		// check above
+		if(state!=tLeft && state!= tRow && state!=tRight){	
+			if(exposed[index-height] == -4) nearUnexCount ++;
+			else if(exposed[index-height] == -5) nearFlagCount ++;
+		}
+		// check above-right
+		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+			if(exposed[index-height+1] == -4) nearUnexCount ++;
+			else if(exposed[index-height+1] == -5) nearFlagCount ++;
+		}
+		// check left
+		if(state!=tLeft && state!= lCol && state!=bLeft){	
+			if(exposed[index-1] == -4) nearUnexCount ++;
+			else if(exposed[index-1] == -5) nearFlagCount ++;
+		}
+		// check right
+		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+			if(exposed[index+1] == -4) nearUnexCount ++;
+			else if(exposed[index+1] == -5) nearFlagCount ++;
+		}
+		// check bottom-left
+		if(state!=tLeft && state!= lCol && state!=bLeft && state!=bRow && state != bRight){	
+			if(exposed[index+height-1] == -4) nearUnexCount ++;
+			else if(exposed[index+height-1] == -5) nearFlagCount ++;
+		}
+		// check bottom
+		if(state!=bLeft && state!= bRow && state!=bRight){	
+			if(exposed[index+height] == -4) nearUnexCount ++;
+			else if(exposed[index+height] == -5) nearFlagCount ++;
+		}
+		// check bottom-right
+		if(state!=bLeft && state!= bRow && state!=bRight && state!=rCol && state != tRight){	
+			if(exposed[index+height+1] == -4) nearUnexCount ++;
+			else if(exposed[index+height+1] == -5) nearFlagCount ++;
+		}
+		
+		
+	}
+	
+	public void exposeNearby(int index, int state){
+		// check above-left
+		if(state!=tLeft && state!= tRow && state!=tRight && state!= lCol && state != bLeft){	
+			if(exposed[index-height-1] == -4) easyExpose(index-height-1);
+		}
+		// check above
+		if(state!=tLeft && state!= tRow && state!=tRight){	
+			if(exposed[index-height] == -4) easyExpose(index-height);
+		}
+		// check above-right
+		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+			if(exposed[index-height+1] == -4) easyExpose(index-height+1);
+		}
+		// check left
+		if(state!=tLeft && state!= lCol && state!=bLeft){	
+			if(exposed[index-1] == -4) easyExpose(index-1);
+		}
+		// check right
+		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+			if(exposed[index+1] == -4) easyExpose(index+1);
+		}
+		// check bottom-left
+		if(state!=tLeft && state!= lCol && state!=bLeft && state!=bRow && state != bRight){	
+			if(exposed[index+height-1] == -4) easyExpose(index+height-1);
+		}
+		// check bottom
+		if(state!=bLeft && state!= bRow && state!=bRight){	
+			if(exposed[index+height] == -4) easyExpose(index+height);
+		}
+		// check bottom-right
+		if(state!=bLeft && state!= bRow && state!=bRight && state!=rCol && state != tRight){	
+			if(exposed[index+height+1] == -4) easyExpose(index+height+1);
+		}
+		
+		
+	}
+	
+	public void flagNearby(int index, int state){
+		// check above-left
+		if(state!=tLeft && state!= tRow && state!=tRight && state!= lCol && state != bLeft){	
+			if(exposed[index-height-1] == -4){
+				exposed[index-height-1] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index-height-1);
+			}
+		}
+		// check above
+		if(state!=tLeft && state!= tRow && state!=tRight){	
+			if(exposed[index-height] == -4){
+				exposed[index-height] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index-height);
+			}
+		}
+		// check above-right
+		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+			if(exposed[index-height+1] == -4) {
+				exposed[index-height+1] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index-height+1);
+			}
+		}
+		// check left
+		if(state!=tLeft && state!= lCol && state!=bLeft){	
+			if(exposed[index-1] == -4) {
+				exposed[index-1] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index-1);
+			}
+		}
+		// check right
+		if(state!=tLeft && state!= tRow && state!=tRight && state!=rCol && state != bRight){	
+			if(exposed[index+1] == -4) {
+				exposed[index+1] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index+1);
+			}
+		}
+		// check bottom-left
+		if(state!=tLeft && state!= lCol && state!=bLeft && state!=bRow && state != bRight){	
+			if(exposed[index+height-1] == -4) {
+				exposed[index+height-1] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index+height-1);
+			}
+		}
+		// check bottom
+		if(state!=bLeft && state!= bRow && state!=bRight){	
+			if(exposed[index+height] == -4) {
+				exposed[index+height] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index+height);
+			}
+		}
+		// check bottom-right
+		if(state!=bLeft && state!= bRow && state!=bRight && state!=rCol && state != tRight){	
+			if(exposed[index+height+1] == -4) {
+				exposed[index+height+1] = flagged; flags++; paintFlags(getGraphics());
+				easyPaint(index+height+1);
+			}
+		}
+		
+	}
+	
+	public void easyPaint(int n){
+		int x = n % width;
+		int y = (int)n/height;
+		paintSquare(getGraphics(), x, y);
+	}
+	
+	public void easyExpose(int n){
+		int x = n % width;
+		int y = (int)n/height;
+		expose(x,y);	
+	}
+  }
