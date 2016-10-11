@@ -656,6 +656,7 @@ public class Minesweeper extends Applet implements Runnable {
 
 	}
 
+
 	public void countNearby(int index, int state) {
 		nearFlagCount = 0;
 		nearUnexCount = 0;
