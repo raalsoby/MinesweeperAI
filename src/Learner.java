@@ -13,7 +13,11 @@ loop the makeTurn and alterValues as long as needed
 public class Learner {
 
     static int UNCHECKED = 9;   // index for unknown blocks on the field
-    static double[] DEFAULT_TABLE = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+
+    // indexes are: #unknowns*2 + 1 and #mines*2 (total)
+    // 0 mines, 0 unknowns, 1 mines, 1 unknowns, 2 mines, 2 unknowns, etc (total 18)
+    static int DU = 100;    // DU = DEFAULT_UTILITY
+    static double[] DEFAULT_TABLE = {DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU};
     static double ALPHA = 0.1;  // this is how much we change these ^ values when something happens
     static int ALIVE_BONUS = 10;
     static int DEATH_PENALTY = -50;
@@ -104,8 +108,6 @@ public class Learner {
             // get the surrounding 8 blocks
             if(board[i] == BOARD_UNCHECKED){
                 temp = surroundingMax(i);
-                if(temp == BOARD_UNCHECKED)
-                    temp = UNCHECKED;
                 utility[i] = temp;
                 if(learningTable[temp] > currentMax){
                     currentMax = learningTable[temp];
@@ -116,84 +118,135 @@ public class Learner {
         return bestState;
     }
 
+
+
     // figures out what the max value around the current position is
     // has lots of special cases
     private int surroundingMax(int pos){
         int max = -10;
+        int uncheckedCount = 0;
         int temp; // holds the current value of whatever adjacent square it's checking
         if(pos == 0){   // top left corner
             // check right and below
+
             if((temp = board[pos + 1]) > max)
                 max = temp;
-            for(int i = 0; i < 2; i++)
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
+            for(int i = 0; i < 2; i++){
                 if((temp = board[pos + width + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
+            }
+
 
         } else if(pos == width - 1){    // top right corner
             // check left and below
             if((temp = board[pos - 1]) > max)
                 max = temp;
-            for(int i = 0; i < 2; i++)
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
+            for(int i = 0; i < 2; i++){
                 if((temp = board[pos + width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
+            }
 
         } else if(pos == board.length - 1){ // bottom right corner
             // check above and left
-            for(int i = 0; i < 2; i++)
+            for(int i = 0; i < 2; i++){
                 if((temp = board[pos - width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
+            }
             if((temp = board[pos - 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
 
         } else if(pos == board.length - width){ // bottom left corner
             // check above and right
-            for(int i = 0; i < 2; i++)
+            for(int i = 0; i < 2; i++){
                 if((temp = board[pos - width + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
+            }
             if((temp = board[pos + 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
 
         } else if(pos < width){ // top row
             // check left, right, and below
             if((temp = board[pos - 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
             if((temp = board[pos + 1]) > max)
                 max = temp;
-            for(int i = 0; i < 3; i++)
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
+            for(int i = 0; i < 3; i++){
                 if((temp = board[pos + width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
+            }
 
         } else if(pos % width == 0){    // left side
             // check above & below, and right
             for(int i = 0; i < 2; i++){
                 if((temp = board[pos - width + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
                 if((temp = board[pos + width + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
             }
             if((temp = board[pos + 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
 
         } else if((pos + 1) % width == 0){  // right side
             // check above & below, and left
             for(int i = 0; i < 2; i++){
                 if((temp = board[pos - width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
                 if((temp = board[pos + width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
             }
             if((temp = board[pos - 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
 
         } else if(pos > board.length - width){  // bottom row
             // check above, left, and right
-            for(int i = 0; i < 3; i++)
+            for(int i = 0; i < 3; i++){
                 if((temp = board[pos - width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
+            }
             if((temp = board[pos - 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
             if((temp = board[pos + 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
 
         } else {
             // NORMAL
@@ -201,18 +254,31 @@ public class Learner {
             for(int i = 0; i < 3; i++){
                 if((temp = board[pos - width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
             }
             // same row
             if((temp = board[pos - 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
             if((temp = board[pos + 1]) > max)
                 max = temp;
+            if(temp == BOARD_UNCHECKED)
+                uncheckedCount++;
             // 3 below
             for(int i = 0; i < 3; i++){
                 if((temp = board[pos + width - 1 + i]) > max)
                     max = temp;
+                if(temp == BOARD_UNCHECKED)
+                    uncheckedCount++;
             }
         }
+
+        max *= 2;
+        if(uncheckedCount * 2 + 1 > max)
+            max = uncheckedCount * 2;
+
         return max;
     }
 
