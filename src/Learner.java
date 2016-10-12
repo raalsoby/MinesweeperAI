@@ -29,35 +29,37 @@ public class Learner {
 
 
 
-    double[] learningTable = new double[10];  // table containing learned values
+    private double[] learningTable = new double[10];  // table containing learned values
+    private int[] adjacent;
 
-    double explorationProb = 0.95;
+    private double explorationProb = 0.95;
 
-    int[] utility;
-    int[] board;
-    int width;
-    int height;
+    private int[] utility;
+    private int[] board;
+    private int width;
+    private int height;
 
-    int lastUnchecked;
-    int lastType;
+    private int lastUnchecked;
+    private int lastType;
 
 
     // TODO: this is ugly
     static int BOARD_UNCHECKED = -4; // this is the board says is unchecked
 
 
-    public Learner(int width, int height, double[] table){
+    public Learner(int width, int height, double[] table, int[] adjacent){
         for(int i = 0; i < learningTable.length; i++)
             learningTable[i] = table[i];
 
         this.width = width;
         this.height = height;
-        utility = new int[width * height];
+        utility = new int[this.width * this.height];
+        this.adjacent = adjacent;
     }
 
 
-    public Learner(int width, int height){
-        this(width, height, DEFAULT_TABLE);
+    public Learner(int width, int height, int[] adjacent){
+        this(width, height, DEFAULT_TABLE, adjacent);
     }
 
     //TODO: values for topLeft etc need to be changed eventually (in Minesweeper.java)
@@ -125,153 +127,155 @@ public class Learner {
     private int surroundingMax(int pos){
         int max = -10;
         int uncheckedCount = 0;
-        int temp; // holds the current value of whatever adjacent square it's checking
+
         if(pos == 0){   // top left corner
             // check right and below
 
-            if((temp = board[pos + 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos + 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos + 1] > max)
+                max = adjacent[pos + 1];
+
+
             for(int i = 0; i < 2; i++){
-                if((temp = board[pos + width + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos + width + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos + width + i] > max)
+                    max = adjacent[pos + width + i];
             }
 
 
         } else if(pos == width - 1){    // top right corner
             // check left and below
-            if((temp = board[pos - 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos - 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos - 1] > max)
+                max = adjacent[pos - 1];
             for(int i = 0; i < 2; i++){
-                if((temp = board[pos + width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > max)
+                    max = adjacent[pos + width - 1 + i];
             }
 
         } else if(pos == board.length - 1){ // bottom right corner
             // check above and left
             for(int i = 0; i < 2; i++){
-                if((temp = board[pos - width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > max)
+                    max = adjacent[pos - width - 1 + i];
             }
-            if((temp = board[pos - 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos - 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos - 1] > max)
+                max = adjacent[pos - 1];
 
         } else if(pos == board.length - width){ // bottom left corner
             // check above and right
             for(int i = 0; i < 2; i++){
-                if((temp = board[pos - width + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos - width + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos - width + i] > max)
+                    max = adjacent[pos - width + i];
             }
-            if((temp = board[pos + 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos + 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos + 1] > max)
+                max = adjacent[pos + 1];
 
         } else if(pos < width){ // top row
             // check left, right, and below
-            if((temp = board[pos - 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos - 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
-            if((temp = board[pos + 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            else if(adjacent[pos - 1] > max)
+                max = adjacent[pos - 1];
+            if(board[pos + 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos + 1] > max)
+                max = adjacent[pos + 1];
             for(int i = 0; i < 3; i++){
-                if((temp = board[pos + width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > max)
+                    max = adjacent[pos + width - 1 + i];
             }
 
         } else if(pos % width == 0){    // left side
             // check above & below, and right
             for(int i = 0; i < 2; i++){
-                if((temp = board[pos - width + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos - width + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
-                if((temp = board[pos + width + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                else if(adjacent[pos - width + i] > max)
+                    max = adjacent[pos - width + i];
+                if(board[pos + width + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos + width + i] > max)
+                    max = adjacent[pos + width + i];
             }
-            if((temp = board[pos + 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos + 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos + 1] > max)
+                max = adjacent[pos + 1];
 
         } else if((pos + 1) % width == 0){  // right side
             // check above & below, and left
             for(int i = 0; i < 2; i++){
-                if((temp = board[pos - width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
-                if((temp = board[pos + width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                else if(adjacent[pos - width - 1 + i] > max)
+                    max = adjacent[pos - width - 1 + i];
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > max)
+                    max = adjacent[pos + width - 1 + i];
             }
-            if((temp = board[pos - 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos - 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos - 1] > max)
+                max = adjacent[pos - 1];
 
         } else if(pos > board.length - width){  // bottom row
             // check above, left, and right
             for(int i = 0; i < 3; i++){
-                if((temp = board[pos - width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > max)
+                    max = adjacent[pos - width - 1 + i];
             }
-            if((temp = board[pos - 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos - 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
-            if((temp = board[pos + 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            else if(adjacent[pos - 1] > max)
+                max = adjacent[pos - 1];
+            if(board[pos + 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos + 1] > max)
+                max = adjacent[pos + 1];
 
         } else {
             // NORMAL
             // 3 above
             for(int i = 0; i < 3; i++){
-                if((temp = board[pos - width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > max)
+                    max = adjacent[pos - width - 1 + i];
             }
             // same row
-            if((temp = board[pos - 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            if(board[pos - 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
-            if((temp = board[pos + 1]) > max)
-                max = temp;
-            if(temp == BOARD_UNCHECKED)
+            else if(adjacent[pos - 1] > max)
+                max = adjacent[pos - 1];
+            if(board[pos + 1] == BOARD_UNCHECKED)
                 uncheckedCount++;
+            else if(adjacent[pos + 1] > max)
+                max = adjacent[pos + 1];
             // 3 below
             for(int i = 0; i < 3; i++){
-                if((temp = board[pos + width - 1 + i]) > max)
-                    max = temp;
-                if(temp == BOARD_UNCHECKED)
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
                     uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > max)
+                    max = adjacent[pos + width - 1 + i];
             }
         }
 
