@@ -14,13 +14,14 @@ public class Learner {
 
     static int UNCHECKED = 9;   // index for unknown blocks on the field
 
-    // indexes are: #unknowns*2 + 1 and #mines*2 (total)
+    // indexes are: #mines*2 + 1 and #unknowns*2 (total)
     // 0 mines, 0 unknowns, 1 mines, 1 unknowns, 2 mines, 2 unknowns, etc (total 18)
     static int DU = 100;    // DU = DEFAULT_UTILITY
-    static double[] DEFAULT_TABLE = {DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU, DU};
+    static int DM = -200;
+    static double[] DEFAULT_TABLE = {DM, DU, DM, DU, DM, DU, DM, DU, DM, DU, DM, DU, DM, DU, DM, DU, DM, DU};
     static double ALPHA = 0.1;  // this is how much we change these ^ values when something happens
-    static int ALIVE_BONUS = 10;
-    static int DEATH_PENALTY = -50;
+    static int ALIVE_BONUS = 1;
+    static int DEATH_PENALTY = -9;
 
 
     static int DEAD = 1;    // accidentally set off a bomb
@@ -29,7 +30,7 @@ public class Learner {
 
 
 
-    private double[] learningTable = new double[10];  // table containing learned values
+    private double[] learningTable = new double[18];  // table containing learned values
     private int[] adjacent;
 
     private double explorationProb = 0.95;
@@ -69,8 +70,10 @@ public class Learner {
         if(state == ALIVE)
             learningTable[lastType] += ALPHA * ALIVE_BONUS;
 
-        else if(state == DEAD)
-            learningTable[lastType] += ALPHA * DEATH_PENALTY;
+        else if(state == DEAD){
+        	learningTable[lastType] += ALPHA * DEATH_PENALTY;
+        }
+            
 //        if(state == NOTHING)  // this is if it tries to check something that's already been checked
     }
 
@@ -79,7 +82,7 @@ public class Learner {
         int startPoint = (int)(Math.random() * board.length);
 
         if(Math.random() < explorationProb){ // check something at random
-            explorationProb -= 0.001;
+            explorationProb -= 0.0001;
             lastUnchecked = startPoint;
             lastType = utility[startPoint];
         } else {                            // check the "first" square it finds with the appropriate utility value
@@ -103,20 +106,26 @@ public class Learner {
     // fills up the maxValue array with maxes and finds best utility number
     // returns best utility number
     public int findMaxValue(){
-        double currentMax = -10;
+        double currentMax = -Double.MAX_VALUE;
         int temp;
         int bestState = -1;
         for(int i = 0; i < board.length; i++){
             // get the surrounding 8 blocks
             if(board[i] == BOARD_UNCHECKED){
+                //System.out.println("INSIDE IF loop 1");
+
                 temp = surroundingMax(i);
                 utility[i] = temp;
-                if(learningTable[temp] > currentMax){
-                    currentMax = learningTable[temp];
-                    bestState = temp;
-                }
+                //if(temp != 2 * 7 + 1 && temp != 2 * 8 + 1)
+                	if(learningTable[temp] > currentMax){
+                		currentMax = learningTable[temp];
+                		bestState = temp;
+                        //System.out.println("INSIDE IF loop 2 !!!!!!");
+
+                	}
             }
         }
+        //System.out.println("BEST STATE LAST: " + bestState);
         return bestState;
     }
 
@@ -279,11 +288,14 @@ public class Learner {
             }
         }
 
-        max *= 2;
-        if(uncheckedCount * 2 + 1 > max)
+        max = max * 2 + 1;
+        if(uncheckedCount * 2 > max)
             max = uncheckedCount * 2;
 
         return max;
+    }
+    public double[] getTable(){
+    	return learningTable;
     }
 
 }

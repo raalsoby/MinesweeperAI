@@ -38,7 +38,7 @@ public class Minesweeper extends Applet implements Runnable {
 	final int bRight = 8;
 	final int rest = 0;
 	int count = 0;
-	int mines = 40; /* number of mines */
+	int mines = 30; /* number of mines */
 	int scoreHeight = 48; /* pixels at top used for scores */
 	int faceSize = 32; /* pixels size of smiley face */
 
@@ -523,7 +523,8 @@ public class Minesweeper extends Applet implements Runnable {
 			int n = y * width + x;
 			if (evt.shiftDown()) {
 				// when shift-left-click activate bot
-				simpleBot();
+				//simpleBot();
+				learningBot();
 			} else if (evt.metaDown()) {
 				if (exposed[n] == unexposed) {
 					exposed[n] = flagged;
@@ -851,4 +852,56 @@ public class Minesweeper extends Applet implements Runnable {
 		int y = (int) n / height;
 		expose(x, y);
 	}
+	//bot for reinforcement learning
+	public void learningBot(){
+		int winCount = 0;
+		ArrayList <LearningScore> scoreList = new ArrayList <LearningScore>();
+		int i =0;
+		Learner learner = new Learner(width, height, adjacent);
+		LearningScore score;
+		while (i < 1000){//learn for i number of games
+			score = new LearningScore();
+			while(sadness == bored){
+				learner.setBoard(exposed);
+				int position = learner.makeTurn();
+				easyExpose(position);
+				score.incNumOfMoves();
+				if(sadness != sad){
+					learner.alterValues(2);
+					if(sadness == happy){
+						score.setWin(true);
+						score.setState(learner.getTable());
+						scoreList.add(score);
+					}
+				}
+				else if(sadness == sad){
+					learner.alterValues(1);
+					score.setWin(false);
+					score.setState(learner.getTable());
+					scoreList.add(score);
+				}
+			}//sadness loop
+			
+			if(score.getWin()) winCount++;
+			System.out.println("State values for game "+ (i+1));
+			printState(scoreList.get(i).getState());
+			System.out.println("Number of Moves: " + scoreList.get(i).getNumOfMoves());
+			System.out.println("Number of Wins: " + winCount);
+			erase();
+			i++;
+		}
+		
+//		printState(scoreList.get(scoreList.size()-1).getState());
+
+	}
+	//print the state
+	public void printState(double[] state){
+		for (int i =0; i< 18; i++){
+			if(i % 2 == 0)
+				System.out.print((i / 2) + " unchecked: ");
+			else System.out.print((i / 2) + " mines: ");
+			System.out.println(state[i]);
+		}
+	}
+		
 }
