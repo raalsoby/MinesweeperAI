@@ -522,8 +522,12 @@ public class Minesweeper extends Applet implements Runnable {
 			int y = (yCoord - scoreHeight) / edge;
 			int n = y * width + x;
 			if (evt.shiftDown()) {
-				// when shift-left-click activate bot
-				simpleBot();
+				// BAD BOT
+				//badBot();
+				// SIMPLE BOt
+				//simpleBot(false);
+				// SMART BOT
+				simpleBot(true);
 			} else if (evt.metaDown()) {
 				if (exposed[n] == unexposed) {
 					exposed[n] = flagged;
@@ -545,8 +549,22 @@ public class Minesweeper extends Applet implements Runnable {
 		;
 		return true;
 	}
-
-	public void simpleBot() {
+	
+	public void badBot(){
+		int temp;
+		
+		while(sadness == bored){
+			temp = (int) (Math.random()*width*height);
+			if (exposed[temp] == unexposed) {
+				easyExpose(temp);
+			}
+		}
+	}
+	
+	
+	
+	
+	public void simpleBot(boolean smart) {
 		int state = 0;
 		
 		// initialize array
@@ -578,7 +596,7 @@ public class Minesweeper extends Applet implements Runnable {
 				
 				// check if there is any UNEXPOSED block left
 				if(exposed[i] == listEnd || exposed[i] >= 0) {
-					utility[i] = 1;
+					
 					// left-top-corner
 					if (i == topLeft) {
 						state = tLeft;
@@ -643,7 +661,7 @@ public class Minesweeper extends Applet implements Runnable {
 			} // FOR-LOOP
 			
 			// Else if no available moves do RANDOM move
-			while (!moveMade) {
+			while (!moveMade && !smart) {
 					int t3 = (int) (Math.random() * height);
 					int t4 = (int) (Math.random() * width);
 					if (exposed[t4 + t3 * width] == unexposed) {
@@ -652,6 +670,22 @@ public class Minesweeper extends Applet implements Runnable {
 						moveMade = true;
 					}
 			}
+			
+			// Else if no available moves do RANDOM move
+			while (!moveMade && smart) {
+				for (int l = 0; l < width * height; l++) {
+					if(exposed[l] >= -1 || exposed[l] == -5)
+						utility[l] = 9999;
+					else
+						utility[l] = (mines - flags) + 6;
+				}
+				// calculate utility
+				calculateUtility();
+				playBestMove();
+				moveMade = true;	
+			}
+			
+			
 		} // WHILE-LOOP
 
 	}
@@ -839,7 +873,118 @@ public class Minesweeper extends Applet implements Runnable {
 		}
 
 	}
+	
+	public void utilNearby(int index, int state) {
+		
+		// check above-left
+		if (state != tLeft && state != tRow && state != tRight && state != lCol && state != bLeft) {
+			if (exposed[index - height - 1] == -4) 
+				utility[index - height - 1] += adjacent[index];
+		}
+		// check above
+		if (state != tLeft && state != tRow && state != tRight) {
+			if (exposed[index - height]  == -4) 
+				utility[index - height]+= adjacent[index];
+		}
+		// check above-right
+		if (state != tLeft && state != tRow && state != tRight && state != rCol && state != bRight) {
+			if (exposed[index - height + 1]  == -4) 
+				utility[index - height + 1]+= adjacent[index];
+		}	
+		// check left
+		if (state != tLeft && state != lCol && state != bLeft) {
+			if (exposed[index - 1]  == -4) 
+				utility[index - 1]+= adjacent[index];
+		}
+		// check right
+		if (state != tRight && state != rCol && state != bRight) {
+			if (exposed[index + 1]  == -4) 
+				utility[index + 1]+= adjacent[index];
+		}
+		// check bottom-left
+		if (state != tLeft && state != lCol && state != bLeft && state != bRow && state != bRight) {
+			if (exposed[index + height - 1]   == -4) 
+				utility[index + height - 1]+= adjacent[index];
+		}
+		// check bottom
+		if (state != bLeft && state != bRow && state != bRight) {
+			if (exposed[index + height]   == -4) 
+				utility[index + height]+= adjacent[index];
+		}
+		// check bottom-right
+		if (state != bLeft && state != bRow && state != bRight && state != rCol && state != tRight) {
+			if (exposed[index + height + 1] == -4) 
+				utility[index + height + 1]+= adjacent[index];
+		}
 
+	}
+	
+	public void calculateUtility(){
+		
+		int state = 0;
+		for (int i = 0; i < width * height; i++) {
+//			System.out.println(exposed[i]);
+			// check if there is any UNEXPOSED block left
+			if(exposed[i] == listEnd || exposed[i] >= 0) {
+//				System.out.println("yo");
+				// left-top-corner
+				if (i == topLeft) {
+					state = tLeft;
+					utilNearby(i, state);
+				}
+				// left-column
+				else if (i % width == 0 && i != topLeft && i != botLeft) {
+					state = lCol;
+					utilNearby(i, state);
+				}
+				// right-column
+				else if (i % width == width - 1 && i != topRight && i != botRight) {
+					state = rCol;
+					utilNearby(i, state);
+				}
+				// top-row
+				else if (i > topLeft && i < topRight) {
+					state = tRow;
+					utilNearby(i, state);
+				}
+				// bottom row
+				else if (i > botLeft && i < botRight) {
+					state = bRow;
+					utilNearby(i, state);
+				}
+				// right-top-corner
+				else if (i == topRight) {
+					state = tRight;
+					utilNearby(i, state);
+				}
+				// left-bottom-corner
+				else if (i == botLeft) {
+					state = bLeft;
+					utilNearby(i, state);
+				}
+				// right-bottom-corner
+				else if (i == botRight) {
+					state = bRight;
+					utilNearby(i, state);
+				}
+				// rest of the Board
+				else {
+					state = rest;
+					utilNearby(i, state);
+				}
+		
+	
+			}
+		}
+		
+//		for (int i = 0; i < width * height; i++) {
+//			if(i % height == 0) 
+//				System.out.println();
+//			System.out.print(utility[i] + " ");
+//		}
+	}
+	
+	
 	public void easyPaint(int n) {
 		int x = n % width;
 		int y = (int) n / height;
@@ -850,5 +995,31 @@ public class Minesweeper extends Applet implements Runnable {
 		int x = n % width;
 		int y = (int) n / height;
 		expose(x, y);
+	}
+	
+	public void playBestMove(){
+		int min = 9999;
+		int target = -1;
+		int countOptions = 0; 
+		ArrayList<Integer> solutions = new ArrayList<Integer>();
+		for (int i = 0; i < width * height; i++) {
+			if(i % height == 0) 
+				System.out.println();
+			System.out.print(utility[i] + " ");
+			if(utility[i] < min){
+				min = utility[i];
+			}
+		}
+		
+		for (int i = 0; i < width * height; i++) {
+			if(utility[i] == min){
+				utility[i] = -1;
+				countOptions++;
+				solutions.add(i);
+			}
+		}
+		target = solutions.get((int) (Math.random()*countOptions));
+		System.out.println("best move is: " + target);		
+		easyExpose(target);
 	}
 }
