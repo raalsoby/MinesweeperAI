@@ -73,6 +73,7 @@ public class Learner {
 
     // TODO: this is ugly
     static int BOARD_UNCHECKED = -4; // this is the board says is unchecked
+    static int BOARD_FLAGGED = -5;
 
 
     public Learner(int width, int height, double[] table, int[] adjacent){
@@ -178,43 +179,44 @@ public class Learner {
         if(pos == 0){   // top left corner
             // check right and below
 
-            if(board[pos + 1] != BOARD_UNCHECKED && adjacent[pos + 1] > maxMine)
+            if(board[pos + 1] != BOARD_UNCHECKED && board[pos + 1] != BOARD_FLAGGED && adjacent[pos + 1] > maxMine)
                 maxMine = adjacent[pos + 1];
 
             for(int i = 0; i < 2; i++){
-                if(board[pos + width + i] != BOARD_UNCHECKED && adjacent[pos + width + i] > maxMine)
+                if(board[pos + width + i] != BOARD_UNCHECKED &&
+                        board[pos + width + i] != BOARD_FLAGGED && adjacent[pos + width + i] > maxMine)
                     maxMine = adjacent[pos + width + i];
             }
 
         } else if(pos == width - 1){    // top right corner
             // check left and below
-            if(board[pos - 1] != BOARD_UNCHECKED && adjacent[pos - 1] > maxMine)
+            if(board[pos - 1] != BOARD_UNCHECKED && board[pos - 1] != BOARD_FLAGGED && adjacent[pos - 1] > maxMine)
                 maxMine = adjacent[pos - 1];
 
             for(int i = 0; i < 2; i++){
-                if(board[pos + width - 1 + i] != BOARD_UNCHECKED && adjacent[pos + width - 1 + i] > maxMine)
+                if(board[pos + width - 1 + i] != BOARD_UNCHECKED && board[pos + width - 1 + i] != BOARD_FLAGGED && adjacent[pos + width - 1 + i] > maxMine)
                     maxMine = adjacent[pos + width - 1 + i];
             }
 
 
         } else if(pos == board.length - 1){ // bottom right corner
             // check left and above
-            if(board[pos - 1] != BOARD_UNCHECKED && adjacent[pos - 1] > maxMine)
+            if(board[pos - 1] != BOARD_UNCHECKED && board[pos - 1] != BOARD_FLAGGED && adjacent[pos - 1] > maxMine)
                 maxMine = adjacent[pos - 1];
 
             for(int i = 0; i < 2; i++){
-                if(board[pos - width - 1 + i] != BOARD_UNCHECKED && adjacent[pos - width - 1 + i] > maxMine)
+                if(board[pos - width - 1 + i] != BOARD_UNCHECKED && board[pos - width - 1 + i] != BOARD_FLAGGED && adjacent[pos - width - 1 + i] > maxMine)
                     maxMine = adjacent[pos - width - 1 + i];
             }
 
 
         } else if(pos == board.length - width){ // bottom left corner
             // check right and above
-            if(board[pos + 1] != BOARD_UNCHECKED && adjacent[pos + 1] > maxMine)
+            if(board[pos + 1] != BOARD_UNCHECKED && board[pos + 1] != BOARD_FLAGGED && adjacent[pos + 1] > maxMine)
                 maxMine = adjacent[pos + 1];
 
             for(int i = 0; i < 2; i++){
-                if(board[pos - width + i] != BOARD_UNCHECKED && adjacent[pos - width + i] > maxMine)
+                if(board[pos - width + i] != BOARD_UNCHECKED && board[pos - width + i] != BOARD_FLAGGED && adjacent[pos - width + i] > maxMine)
                     maxMine = adjacent[pos - width + i];
             }
 

@@ -1102,7 +1102,7 @@ public class Minesweeper extends Applet implements Runnable {
 	
 	//print the state
 	public void printState(double[] state){
-		for (int i =0; i< 10; i++){ 
+		for (int i =0; i< 10; i++){
 //			if(i % 2 == 0)
 //				System.out.print((i / 2) + " unchecked: ");
 //			else System.out.print((i / 2) + " mines: ");
