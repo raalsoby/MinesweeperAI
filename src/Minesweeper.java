@@ -1096,6 +1096,7 @@ public class Minesweeper extends Applet implements Runnable {
 //		printState(scoreList.get(scoreList.size()-1).getState());
 
 	}
+	
 	//print the state
 	public void printState(double[] state){
 		for (int i =0; i< 9 * 8 * 8; i++){ // used to be ... ; i < 18; ...
@@ -1104,6 +1105,70 @@ public class Minesweeper extends Applet implements Runnable {
 //			else System.out.print((i / 2) + " mines: ");
 			System.out.println(state[i]);
 		}
+	}
+	
+	public void markFlags(){
+		int state = 0;
+		
+		for (int i = 0; i < width * height; i++) {
+			
+			// check if there is any UNEXPOSED block left
+			if(exposed[i] == listEnd || exposed[i] >= 0) {
+				
+				// left-top-corner
+				if (i == topLeft) {
+					state = tLeft;
+					countNearby(i, state);
+				}
+				// left-column
+				else if (i % width == 0 && i != topLeft && i != botLeft) {
+					state = lCol;
+					countNearby(i, state);
+				}
+				// right-column
+				else if (i % width == width - 1 && i != topRight && i != botRight) {
+					state = rCol;
+					countNearby(i, state);
+				}
+				// top-row
+				else if (i > topLeft && i < topRight) {
+					state = tRow;
+					countNearby(i, state);
+				}
+				// bottom row
+				else if (i > botLeft && i < botRight) {
+					state = bRow;
+					countNearby(i, state);
+				}
+				// right-top-corner
+				else if (i == topRight) {
+					state = tRight;
+					countNearby(i, state);
+				}
+				// left-bottom-corner
+				else if (i == botLeft) {
+					state = bLeft;
+					countNearby(i, state);
+				}
+				// right-bottom-corner
+				else if (i == botRight) {
+					state = bRight;
+					countNearby(i, state);
+				}
+				// rest of the Board
+				else {
+					state = rest;
+					countNearby(i, state);
+				}
+				
+				// if we need more flags
+				if (nearFlagCount < adjacent[i]) {
+					if (nearFlagCount + nearUnexCount == adjacent[i]) {
+						flagNearby(i, state);
+					}
+				}						
+			} // IF-UNEXPOSED-STATEMENT
+		} // FOR-LOOP
 	}
 		
 }
