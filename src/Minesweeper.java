@@ -38,10 +38,14 @@ public class Minesweeper extends Applet implements Runnable {
 	final int bRight = 8;
 	final int rest = 0;
 	int count = 0;
-	int mines = 40; /* number of mines */
+	int moves = 0;
+	int mines = 15; /* number of mines */
 	int scoreHeight = 48; /* pixels at top used for scores */
 	int faceSize = 32; /* pixels size of smiley face */
 
+	Score score = new Score();
+	Score score2 = new Score();
+	Score score3 = new Score();
 	/* "adjacent" and "exposed" are indexed by square number = y*width+x */
 
 	/*
@@ -522,12 +526,25 @@ public class Minesweeper extends Applet implements Runnable {
 			int y = (yCoord - scoreHeight) / edge;
 			int n = y * width + x;
 			if (evt.shiftDown()) {
+
+				score = new Score();
+				score2 = new Score();
+				score3 = new Score();
+				for(int z = 0; z < 10000; z++){
 				// BAD BOT
-				//badBot();
+				badBot(); // 0.0
+				erase();
 				// SIMPLE BOt
-				//simpleBot(false);
+				simpleBot(false); //
+				erase();
 				// SMART BOT
-				simpleBot(true);
+				simpleBot(true); // 
+				erase();
+				}
+				System.out.println("Bad Bot: " + score.getWins());
+				System.out.println("Simple Bot: " + score2.getWins());
+				System.out.println("Smart Bot: " + score3.getWins());
+				
 			} else if (evt.metaDown()) {
 				if (exposed[n] == unexposed) {
 					exposed[n] = flagged;
@@ -552,13 +569,16 @@ public class Minesweeper extends Applet implements Runnable {
 	
 	public void badBot(){
 		int temp;
-		
+		moves = 0;
 		while(sadness == bored){
 			temp = (int) (Math.random()*width*height);
 			if (exposed[temp] == unexposed) {
 				easyExpose(temp);
+				moves++;
 			}
 		}
+		score.addGame(moves, (sadness == happy));
+		
 	}
 	
 	
@@ -566,7 +586,7 @@ public class Minesweeper extends Applet implements Runnable {
 	
 	public void simpleBot(boolean smart) {
 		int state = 0;
-		
+		moves = 0;
 		// initialize array
 		if (utility == null)
 			utility = new int[width * height];
@@ -577,6 +597,7 @@ public class Minesweeper extends Applet implements Runnable {
 		// do first random click
 		int i = 0;
 		while (count < 1) {
+			moves ++;
 			int t1 = (int) (Math.random() * width);
 			int t2 = (int) (Math.random() * height);
 			if (exposed[t1 + t2 * width] != flagged) {
@@ -590,6 +611,7 @@ public class Minesweeper extends Applet implements Runnable {
 		
 		// loop until game is done
 		while (sadness == bored && moveMade) {
+			
 			moveMade = false;
 			countRep++;
 			for (i = 0; i < width * height; i++) {
@@ -668,6 +690,7 @@ public class Minesweeper extends Applet implements Runnable {
 						expose(t4, t3);
 						count++;
 						moveMade = true;
+						moves++;
 					}
 			}
 			
@@ -677,16 +700,20 @@ public class Minesweeper extends Applet implements Runnable {
 					if(exposed[l] >= -1 || exposed[l] == -5)
 						utility[l] = 9999;
 					else
-						utility[l] = (mines - flags) + 6;
+						utility[l] = (mines - flags);
 				}
 				// calculate utility
 				calculateUtility();
 				playBestMove();
 				moveMade = true;	
+				moves++;
 			}
 			
 			
 		} // WHILE-LOOP
+		
+		if(smart) score3.addGame(moves, (sadness == happy));
+		else score2.addGame(moves, (sadness == happy));
 
 	}
 
@@ -995,6 +1022,7 @@ public class Minesweeper extends Applet implements Runnable {
 		int x = n % width;
 		int y = (int) n / height;
 		expose(x, y);
+		moves++;
 	}
 	
 	public void playBestMove(){
@@ -1003,9 +1031,9 @@ public class Minesweeper extends Applet implements Runnable {
 		int countOptions = 0; 
 		ArrayList<Integer> solutions = new ArrayList<Integer>();
 		for (int i = 0; i < width * height; i++) {
-			if(i % height == 0) 
-				System.out.println();
-			System.out.print(utility[i] + " ");
+//			if(i % height == 0) 
+//				System.out.println();
+//			System.out.print(utility[i] + " ");
 			if(utility[i] < min){
 				min = utility[i];
 			}
@@ -1019,7 +1047,7 @@ public class Minesweeper extends Applet implements Runnable {
 			}
 		}
 		target = solutions.get((int) (Math.random()*countOptions));
-		System.out.println("best move is: " + target);		
+//		System.out.println("best move is: " + target);		
 		easyExpose(target);
 	}
 }

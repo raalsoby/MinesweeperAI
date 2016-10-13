@@ -51,7 +51,18 @@ public class Score {
 			return -1;
 		}
 	}
-
+	
+	
+	public int getWins() { // get avg win rate
+		int wins = 0;
+		for (boolean s : won) {
+			if (s) {
+				wins++;
+			}
+		}
+		return wins;
+	}
+	
 	public int getGames() {
 		return games;
 	}
