@@ -39,7 +39,8 @@ public class Minesweeper extends Applet implements Runnable {
 	final int rest = 0;
 	int count = 0;
 	int moves = 0;
-	int mines = 15; /* number of mines */
+	int mines = 30; /* number of mines */
+
 	int scoreHeight = 48; /* pixels at top used for scores */
 	int faceSize = 32; /* pixels size of smiley face */
 
@@ -526,7 +527,6 @@ public class Minesweeper extends Applet implements Runnable {
 			int y = (yCoord - scoreHeight) / edge;
 			int n = y * width + x;
 			if (evt.shiftDown()) {
-
 				score = new Score();
 				score2 = new Score();
 				score3 = new Score();
@@ -534,7 +534,7 @@ public class Minesweeper extends Applet implements Runnable {
 				// BAD BOT
 				badBot(); // 0.0
 				erase();
-				// SIMPLE BOt
+				// SIMPLE BOT
 				simpleBot(false); //
 				erase();
 				// SMART BOT
@@ -544,7 +544,8 @@ public class Minesweeper extends Applet implements Runnable {
 				System.out.println("Bad Bot: " + score.getWins());
 				System.out.println("Simple Bot: " + score2.getWins());
 				System.out.println("Smart Bot: " + score3.getWins());
-				
+				// LEARNING BOT
+				learningBot();
 			} else if (evt.metaDown()) {
 				if (exposed[n] == unexposed) {
 					exposed[n] = flagged;
@@ -1050,4 +1051,59 @@ public class Minesweeper extends Applet implements Runnable {
 //		System.out.println("best move is: " + target);		
 		easyExpose(target);
 	}
+	//bot for reinforcement learning
+	public void learningBot(){
+		int winCount = 0;
+		ArrayList <LearningScore> scoreList = new ArrayList <LearningScore>();
+		int i =0;
+		Learner learner = new Learner(width, height, adjacent);
+		LearningScore score;
+		while (i < 10000){//learn for i number of games
+			score = new LearningScore();
+			while(sadness == bored){
+				learner.setBoard(exposed);
+				int position = learner.makeTurn();
+				easyExpose(position);
+				score.incNumOfMoves();
+				if(sadness != sad){
+					learner.alterValues(2);
+					if(sadness == happy){
+						score.setWin(true);
+						score.setState(learner.getTable());
+						scoreList.add(score);
+					}
+				}
+				else if(sadness == sad){
+					learner.alterValues(1);
+					learner.setMoveCount(0);
+					score.setWin(false);
+					score.setState(learner.getTable());
+					scoreList.add(score);
+				}
+			}//sadness loop
+			
+			if(score.getWin()) winCount++;
+//			System.out.println("State values for game "+ (i+1));
+//			printState(scoreList.get(i).getState());
+			System.out.println("Number of Moves: " + scoreList.get(i).getNumOfMoves());
+			System.out.println("Number of Wins: " + winCount);
+			erase();
+			i++;
+		}
+
+//		printState(scoreList.get(i).getState());
+		
+//		printState(scoreList.get(scoreList.size()-1).getState());
+
+	}
+	//print the state
+	public void printState(double[] state){
+		for (int i =0; i< 9 * 8 * 8; i++){ // used to be ... ; i < 18; ...
+//			if(i % 2 == 0)
+//				System.out.print((i / 2) + " unchecked: ");
+//			else System.out.print((i / 2) + " mines: ");
+			System.out.println(state[i]);
+		}
+	}
+		
 }
