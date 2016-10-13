@@ -1058,7 +1058,7 @@ public class Minesweeper extends Applet implements Runnable {
 		int i =0;
 		Learner learner = new Learner(width, height, adjacent);
 		LearningScore score;
-		while (i < 10000){//learn for i number of games
+		while (i < 100){//learn for i number of games
 			score = new LearningScore();
 			while(sadness == bored){
 				learner.setBoard(exposed);
@@ -1099,7 +1099,7 @@ public class Minesweeper extends Applet implements Runnable {
 	
 	//print the state
 	public void printState(double[] state){
-		for (int i =0; i< 9 * 8 * 8; i++){ // used to be ... ; i < 18; ...
+		for (int i =0; i< 10; i++){ 
 //			if(i % 2 == 0)
 //				System.out.print((i / 2) + " unchecked: ");
 //			else System.out.print((i / 2) + " mines: ");
