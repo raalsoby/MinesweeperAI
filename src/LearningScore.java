@@ -9,7 +9,7 @@ public class LearningScore {
 	public LearningScore(){
 		this.win = true;
 		this.numOfMoves = 0;
-		this.state = new double[8 * 8 * 9];		// changed this to match size of learning table
+		this.state = new double[10];		// changed this to match size of learning table
 	}
 
 	public boolean getWin() {
