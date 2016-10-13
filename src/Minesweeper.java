@@ -527,23 +527,23 @@ public class Minesweeper extends Applet implements Runnable {
 			int y = (yCoord - scoreHeight) / edge;
 			int n = y * width + x;
 			if (evt.shiftDown()) {
-				score = new Score();
-				score2 = new Score();
-				score3 = new Score();
-				for(int z = 0; z < 10000; z++){
-				// BAD BOT
-				badBot(); // 0.0
-				erase();
-				// SIMPLE BOT
-				simpleBot(false); //
-				erase();
-				// SMART BOT
-				simpleBot(true); // 
-				erase();
-				}
-				System.out.println("Bad Bot: " + score.getWins());
-				System.out.println("Simple Bot: " + score2.getWins());
-				System.out.println("Smart Bot: " + score3.getWins());
+//				score = new Score();
+//				score2 = new Score();
+//				score3 = new Score();
+//				for(int z = 0; z < 10000; z++){
+//				// BAD BOT
+//				badBot(); // 0.0
+//				erase();
+//				// SIMPLE BOT
+//				simpleBot(false); //
+//				erase();
+//				// SMART BOT
+//				simpleBot(true); // 
+//				erase();
+//				}
+//				System.out.println("Bad Bot: " + score.getWins());
+//				System.out.println("Simple Bot: " + score2.getWins());
+//				System.out.println("Smart Bot: " + score3.getWins());
 				// LEARNING BOT
 				learningBot();
 			} else if (evt.metaDown()) {
@@ -1058,13 +1058,16 @@ public class Minesweeper extends Applet implements Runnable {
 		int i =0;
 		Learner learner = new Learner(width, height, adjacent);
 		LearningScore score;
-		while (i < 100){//learn for i number of games
+		while (i < 10000){//learn for i number of games
 			score = new LearningScore();
 			while(sadness == bored){
+				markFlags();
 				learner.setBoard(exposed);
-				int position = learner.makeTurn();
-				easyExpose(position);
-				score.incNumOfMoves();
+				int position = learner.makeFirstTurn();
+				if(exposed[position] == unexposed) {
+					easyExpose(position);
+					score.incNumOfMoves();
+				}				
 				if(sadness != sad){
 					learner.alterValues(2);
 					if(sadness == happy){
