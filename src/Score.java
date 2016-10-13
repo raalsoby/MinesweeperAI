@@ -39,12 +39,12 @@ public class Score {
 
 	public double getWinRate() { // get avg win rate
 		int wins = 0;
-		for (boolean s : won) {
+		for (boolean s : won) { // get number of wins
 			if (s) {
 				wins++;
 			}
 		}
-		if (won.size() > 0) {
+		if (won.size() > 0) { // avoid /0 error
 			return wins / won.size();
 		}
 		else {
