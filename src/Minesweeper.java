@@ -859,7 +859,7 @@ public class Minesweeper extends Applet implements Runnable {
 		int i =0;
 		Learner learner = new Learner(width, height, adjacent);
 		LearningScore score;
-		while (i < 1000){//learn for i number of games
+		while (i < 10000){//learn for i number of games
 			score = new LearningScore();
 			while(sadness == bored){
 				learner.setBoard(exposed);
@@ -876,6 +876,7 @@ public class Minesweeper extends Applet implements Runnable {
 				}
 				else if(sadness == sad){
 					learner.alterValues(1);
+					learner.setMoveCount(0);
 					score.setWin(false);
 					score.setState(learner.getTable());
 					scoreList.add(score);
@@ -883,23 +884,25 @@ public class Minesweeper extends Applet implements Runnable {
 			}//sadness loop
 			
 			if(score.getWin()) winCount++;
-			System.out.println("State values for game "+ (i+1));
-			printState(scoreList.get(i).getState());
+//			System.out.println("State values for game "+ (i+1));
+//			printState(scoreList.get(i).getState());
 			System.out.println("Number of Moves: " + scoreList.get(i).getNumOfMoves());
 			System.out.println("Number of Wins: " + winCount);
 			erase();
 			i++;
 		}
+
+//		printState(scoreList.get(i).getState());
 		
 //		printState(scoreList.get(scoreList.size()-1).getState());
 
 	}
 	//print the state
 	public void printState(double[] state){
-		for (int i =0; i< 18; i++){
-			if(i % 2 == 0)
-				System.out.print((i / 2) + " unchecked: ");
-			else System.out.print((i / 2) + " mines: ");
+		for (int i =0; i< 9 * 8 * 8; i++){ // used to be ... ; i < 18; ...
+//			if(i % 2 == 0)
+//				System.out.print((i / 2) + " unchecked: ");
+//			else System.out.print((i / 2) + " mines: ");
 			System.out.println(state[i]);
 		}
 	}

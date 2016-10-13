@@ -10,6 +10,8 @@ alterValues(state); where state is what happened to the game (DEAD, ALIVE, or NO
 loop the makeTurn and alterValues as long as needed
 */
 
+import java.util.DoubleSummaryStatistics;
+
 public class Learner {
 
     static int UNCHECKED = 9;   // index for unknown blocks on the field
@@ -33,6 +35,16 @@ public class Learner {
     private double[] learningTable = new double[18];  // table containing learned values
     private int[] adjacent;
 
+    private double[] learningTable2; //biggest surrounding value, # times it shows up, # uncovered blocks
+    static int BIGGEST_MINE = 9;
+    static int AMOUNT_OF_BIGGEST = 8;
+    static int NUM_UNCOVERED = 8;
+    static int TABLE2_SIZE = BIGGEST_MINE * AMOUNT_OF_BIGGEST * NUM_UNCOVERED;
+    int biggestMine;        // these are the last recorded values
+    int amountOfBiggest;
+    int numUncovered;
+
+
     private double explorationProb = 0.95;
 
     private int[] utility;
@@ -43,6 +55,8 @@ public class Learner {
     private int lastUnchecked;
     private int lastType;
 
+    private int moveCount;
+
 
     // TODO: this is ugly
     static int BOARD_UNCHECKED = -4; // this is the board says is unchecked
@@ -52,12 +66,20 @@ public class Learner {
         for(int i = 0; i < learningTable.length; i++)
             learningTable[i] = table[i];
 
+        learningTable2 = new double[BIGGEST_MINE * AMOUNT_OF_BIGGEST * NUM_UNCOVERED];
+        for(int i = 0; i < TABLE2_SIZE; i++)
+            learningTable2[i] = DU;
+
         this.width = width;
         this.height = height;
         utility = new int[this.width * this.height];
         this.adjacent = adjacent;
+        moveCount = 0;
     }
 
+    public void setMoveCount(int moveCount) {
+        this.moveCount = moveCount;
+    }
 
     public Learner(int width, int height, int[] adjacent){
         this(width, height, DEFAULT_TABLE, adjacent);
@@ -67,13 +89,19 @@ public class Learner {
 
 
     public void alterValues(int state){
-        if(state == ALIVE)
-            learningTable[lastType] += ALPHA * ALIVE_BONUS;
+        if(moveCount > 5){
+            if(state == ALIVE){
+//            learningTable[lastType] += ALPHA * ALIVE_BONUS;
+                learningTable2[lastType] += ALPHA * ALIVE_BONUS;
+            }
 
-        else if(state == DEAD){
-        	learningTable[lastType] += ALPHA * DEATH_PENALTY;
+            else if(state == DEAD){
+//        	learningTable[lastType] += ALPHA * DEATH_PENALTY;
+                learningTable2[lastType] += ALPHA * DEATH_PENALTY;
+            }
         }
-            
+        moveCount++;
+
 //        if(state == NOTHING)  // this is if it tries to check something that's already been checked
     }
 
@@ -86,7 +114,7 @@ public class Learner {
             lastUnchecked = startPoint;
             lastType = utility[startPoint];
         } else {                            // check the "first" square it finds with the appropriate utility value
-            lastType = findMaxValue();
+            lastType = findMaxValue2();      // TODO: change this back to findMaxValue() for original
             for(int i = startPoint; i < board.length; i++)
                 if(utility[i] == lastType)
                     return i;
@@ -98,6 +126,9 @@ public class Learner {
         return lastUnchecked;
 
     }
+
+
+
 
     public void setBoard(int[] board) {
         this.board = board;
@@ -129,6 +160,305 @@ public class Learner {
         return bestState;
     }
 
+
+    public int findMaxValue2(){
+        double currentMax = -Double.MAX_VALUE;
+        int temp;
+        int bestState = -1;
+
+        for(int i = 0; i < board.length; i++){
+            if(board[i] == BOARD_UNCHECKED){
+                temp = surroundingMax2(i);
+                utility[i] = temp;
+                if(learningTable2[temp] > currentMax){
+                    currentMax = learningTable2[temp];
+                    bestState = temp;
+                }
+            }
+        }
+        return bestState;
+    }
+
+
+    private int surroundingMax2(int pos){
+        int maxMine = -10;      // biggest mine count surrounding this (pos) block
+        int maxCount = 0;
+        int uncheckedCount = 0;
+
+        if(pos == 0){   // top left corner
+            // check right and below
+
+            if(board[pos + 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos + 1] > maxMine){
+                maxMine = adjacent[pos + 1];
+                maxCount = 1;
+            } else if(adjacent[pos + 1] == maxMine)
+                maxCount++;
+
+            for(int i = 0; i < 2; i++){
+                if(board[pos + width + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos + width + i] > maxMine){
+                    maxMine = adjacent[pos + width + i];
+                    maxCount = 1;
+                } else if(adjacent[pos + width + i] == maxMine)
+                    maxCount++;
+
+            }
+
+            maxCount += 5; // corner bias
+
+
+        } else if(pos == width - 1){    // top right corner
+            // check left and below
+            if(board[pos - 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos - 1] > maxMine){
+                maxMine = adjacent[pos - 1];
+                maxCount = 1;
+            } else if(adjacent[pos - 1] == maxMine)
+                maxCount++;
+
+            for(int i = 0; i < 2; i++){
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > maxMine) {
+                    maxMine = adjacent[pos + width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos + width - 1 + i] == maxMine)
+                    maxCount++;
+            }
+
+            maxCount += 5; // corner bias
+
+
+        } else if(pos == board.length - 1){ // bottom right corner
+            // check left and above
+            if(board[pos - 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos - 1] > maxMine){
+                maxMine = adjacent[pos - 1];
+                maxCount = 1;
+            } else if(adjacent[pos - 1] == maxMine)
+                maxCount++;
+
+            for(int i = 0; i < 2; i++){
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos - width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos - width - 1 + i] == maxMine)
+                    maxCount++;
+            }
+
+
+            maxCount += 5; // corner bias
+
+        } else if(pos == board.length - width){ // bottom left corner
+            // check right and above
+            if(board[pos + 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos + 1] > maxMine){
+                maxMine = adjacent[pos + 1];
+                maxCount = 1;
+            } else if(adjacent[pos + 1] == maxMine)
+                maxCount++;
+
+            for(int i = 0; i < 2; i++){
+                if(board[pos - width + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos - width + i] > maxMine){
+                    maxMine = adjacent[pos - width + i];
+                    maxCount = 1;
+                } else if(adjacent[pos - width + i] == maxMine)
+                    maxCount++;
+            }
+
+            maxCount += 5; // corner bias
+
+        } else if(pos < width){ // top row
+            // check left, right, and below
+            if(board[pos - 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos - 1] > maxMine){
+                maxMine = adjacent[pos - 1];
+                maxCount = 1;
+            } else if(adjacent[pos - 1] == maxMine)
+                maxCount++;
+
+            if(board[pos + 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos + 1] > maxMine){
+                maxMine = adjacent[pos + 1];
+                maxCount = 1;
+            } else if(adjacent[pos + 1] == maxMine)
+                maxCount++;
+
+            for(int i = 0; i < 3; i++){
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos + width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos + width - 1 + i] == maxMine)
+                    maxCount++;
+
+            }
+
+            maxCount += 3; // edge bias
+
+        } else if(pos % width == 0){    // left side
+            // check above & below, and right
+            for(int i = 0; i < 2; i++){
+                if(board[pos - width + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos - width + i] > maxMine){
+                    maxMine = adjacent[pos - width + i];
+                    maxCount = 1;
+                } else if(adjacent[pos - width + i] == maxMine)
+                    maxCount++;
+
+                if(board[pos + width + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos + width + i] > maxMine){
+                    maxMine = adjacent[pos + width + i];
+                    maxCount = 1;
+                } else if(adjacent[pos + width + i] == maxMine)
+                    maxCount++;
+
+            }
+            if(board[pos + 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos + 1] > maxMine){
+                maxMine = adjacent[pos + 1];
+                maxCount = 1;
+            } else if(adjacent[pos + 1] == maxMine)
+                maxCount++;
+
+
+            maxCount += 3; // edge bias
+
+        } else if((pos + 1) % width == 0){  // right side
+            // check above & below, and left
+            for(int i = 0; i < 2; i++){
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos - width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos - width - 1 + i] == maxMine)
+                    maxCount++;
+
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos + width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos + width - 1 + i] == maxMine)
+                    maxCount++;
+
+            }
+            if(board[pos - 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos - 1] > maxMine){
+                maxMine = adjacent[pos - 1];
+                maxCount = 1;
+            } else if(adjacent[pos - 1] == maxMine)
+                maxCount++;
+
+
+            maxCount += 3; // edge bias
+
+        } else if(pos > board.length - width){  // bottom row
+            // check above, left, and right
+            for(int i = 0; i < 3; i++){
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos - width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos - width - 1 + i] == maxMine)
+                    maxCount++;
+
+            }
+            if(board[pos - 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos - 1] > maxMine){
+                maxMine = adjacent[pos - 1];
+                maxCount = 1;
+            } else if(adjacent[pos - 1] == maxMine)
+                maxCount++;
+
+            if(board[pos + 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos + 1] > maxMine){
+                maxMine = adjacent[pos + 1];
+                maxCount = 1;
+            } else if(adjacent[pos + 1] == maxMine)
+                maxCount++;
+
+
+            maxCount += 3; // edge bias
+
+        } else {
+            // NORMAL
+            // 3 above
+            for(int i = 0; i < 3; i++){
+                if(board[pos - width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos - width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos - width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos - width - 1 + i] == maxMine)
+                    maxCount++;
+
+            }
+            // same row
+            if(board[pos - 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos - 1] > maxMine){
+                maxMine = adjacent[pos - 1];
+                maxCount = 1;
+            } else if(adjacent[pos - 1] == maxMine)
+                maxCount++;
+            // same row still
+            if(board[pos + 1] == BOARD_UNCHECKED)
+                uncheckedCount++;
+            else if(adjacent[pos + 1] > maxMine){
+                maxMine = adjacent[pos + 1];
+                maxCount = 1;
+            } else if(adjacent[pos + 1] == maxMine)
+                maxCount++;
+
+            // 3 below
+            for(int i = 0; i < 3; i++){
+                if(board[pos + width - 1 + i] == BOARD_UNCHECKED)
+                    uncheckedCount++;
+                else if(adjacent[pos + width - 1 + i] > maxMine){
+                    maxMine = adjacent[pos + width - 1 + i];
+                    maxCount = 1;
+                } else if(adjacent[pos + width - 1 + i] == maxMine)
+                    maxCount++;
+
+            }
+
+        }
+
+        // in case there are no checked blocks
+        if(maxMine < 0){
+            maxMine = 0;
+        }
+
+        // http://stackoverflow.com/questions/7367770/how-to-flatten-or-index-3d-array-in-1d-array
+        return maxMine + (AMOUNT_OF_BIGGEST * maxCount) + (AMOUNT_OF_BIGGEST * NUM_UNCOVERED * uncheckedCount);
+
+//        biggestMine = maxMine;
+//        amountOfBiggest = maxCount;
+//        numUncovered = uncheckedCount;
+
+    }
 
 
     // figures out what the max value around the current position is
