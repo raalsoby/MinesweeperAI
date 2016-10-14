@@ -20,8 +20,8 @@ public class Minesweeper extends Applet implements Runnable {
 	 */
 
 	int edge = 16; /* pixels on the edge of a square */
-	int width = 16; /* width in squares */
-	int height = 16; /* height in squares */
+	int width = 8; /* width in squares */
+	int height = 8; /* height in squares */
 	int topLeft = 0;
 	int topRight = width - 1;
 	int botLeft = width * height - width;
@@ -39,7 +39,7 @@ public class Minesweeper extends Applet implements Runnable {
 	final int rest = 0;
 	int count = 0;
 	int moves = 0;
-	int mines = 30; /* number of mines */
+	int mines = 10; /* number of mines */
 
 	int scoreHeight = 48; /* pixels at top used for scores */
 	int faceSize = 32; /* pixels size of smiley face */
@@ -79,6 +79,7 @@ public class Minesweeper extends Applet implements Runnable {
 	static final int queried = -6; /* query flag by user */
 
 	int flags = 0; /* count of flags currently set */
+	int flagsCount = 0;
 	int remaining = 0; /* count of unexposed squares */
 	int sadness = 0; /* whether smiley is sad */
 	static final int sad = -1; /* smiley value after loss */
@@ -529,20 +530,20 @@ public class Minesweeper extends Applet implements Runnable {
 			if (evt.shiftDown()) {
 //				score = new Score();
 //				score2 = new Score();
-//				score3 = new Score();
+////				score3 = new Score();
 //				for(int z = 0; z < 10000; z++){
 //				// BAD BOT
 //				badBot(); // 0.0
 //				erase();
 //				// SIMPLE BOT
-//				simpleBot(false); //
-//				erase();
-//				// SMART BOT
-//				simpleBot(true); // 
-//				erase();
+////				simpleBot(false); //
+////				erase();
+////				// SMART BOT
+////				simpleBot(true); // 
+////				erase();
 //				}
 //				System.out.println("Bad Bot: " + score.getWins());
-//				System.out.println("Simple Bot: " + score2.getWins());
+////				System.out.println("Simple Bot: " + score2.getWins());
 //				System.out.println("Smart Bot: " + score3.getWins());
 				// LEARNING BOT
 				learningBot();
@@ -572,6 +573,7 @@ public class Minesweeper extends Applet implements Runnable {
 		int temp;
 		moves = 0;
 		while(sadness == bored){
+//			markFlags();
 			temp = (int) (Math.random()*width*height);
 			if (exposed[temp] == unexposed) {
 				easyExpose(temp);
@@ -831,7 +833,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != tLeft && state != tRow && state != tRight && state != lCol && state != bLeft) {
 			if (exposed[index - height - 1] == -4) {
 				exposed[index - height - 1] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index - height - 1);
 			}
@@ -840,7 +842,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != tLeft && state != tRow && state != tRight) {
 			if (exposed[index - height] == -4) {
 				exposed[index - height] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index - height);
 			}
@@ -849,7 +851,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != tLeft && state != tRow && state != tRight && state != rCol && state != bRight) {
 			if (exposed[index - height + 1] == -4) {
 				exposed[index - height + 1] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index - height + 1);
 			}
@@ -858,7 +860,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != tLeft && state != lCol && state != bLeft) {
 			if (exposed[index - 1] == -4) {
 				exposed[index - 1] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index - 1);
 			}
@@ -867,7 +869,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != tRight && state != rCol && state != bRight) {
 			if (exposed[index + 1] == -4) {
 				exposed[index + 1] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index + 1);
 			}
@@ -876,7 +878,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != tLeft && state != lCol && state != bLeft && state != bRow && state != bRight) {
 			if (exposed[index + height - 1] == -4) {
 				exposed[index + height - 1] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index + height - 1);
 			}
@@ -885,7 +887,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != bLeft && state != bRow && state != bRight) {
 			if (exposed[index + height] == -4) {
 				exposed[index + height] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index + height);
 			}
@@ -894,7 +896,7 @@ public class Minesweeper extends Applet implements Runnable {
 		if (state != bLeft && state != bRow && state != bRight && state != rCol && state != tRight) {
 			if (exposed[index + height + 1] == -4) {
 				exposed[index + height + 1] = flagged;
-				flags++;
+				flagsCount++;
 				paintFlags(getGraphics());
 				easyPaint(index + height + 1);
 			}
@@ -1055,11 +1057,22 @@ public class Minesweeper extends Applet implements Runnable {
 	public void learningBot(){
 		int winCount = 0;
 		ArrayList <LearningScore> scoreList = new ArrayList <LearningScore>();
-		int i =0;
+		int i = 0;
 		Learner learner = new Learner(width, height, adjacent);
 		LearningScore score;
+		ArrayList<Integer> scores = new ArrayList<Integer>();
+		long totalScore = 0; 
+		int lastCheckedI = 0;
 		while (i < 10000){//learn for i number of games
+			flagsCount = 0;
 			score = new LearningScore();
+			if(i % 1000 == 0 && lastCheckedI != i){
+				System.out.println("DONE 1000 GAMES");
+				scores.add((int)totalScore/1000);
+				totalScore = 0;
+				lastCheckedI = i;
+			}
+			
 			while(sadness == bored){
 				markFlags();
 				learner.setBoard(exposed);
@@ -1071,33 +1084,50 @@ public class Minesweeper extends Applet implements Runnable {
 				if(sadness != sad){
 					learner.alterValues(2);
 					if(sadness == happy){
-						score.setWin(true);
-						score.setState(learner.getTable());
-						scoreList.add(score);
+						if(flagsCount >= 1){
+							totalScore += score.getNumOfMoves();
+							score.setWin(true);
+							score.setState(learner.getTable());
+							scoreList.add(score);
+						}
 					}
 				}
 				else if(sadness == sad){
-					learner.alterValues(1);
-					learner.setMoveCount(0);
-					score.setWin(false);
-					score.setState(learner.getTable());
-					scoreList.add(score);
+					if(flagsCount >= 1){
+						totalScore += score.getNumOfMoves();
+						learner.alterValues(1);
+						learner.setMoveCount(0);
+						score.setWin(false);
+						score.setState(learner.getTable());
+						scoreList.add(score);
+					}
 				}
 			}//sadness loop
 			
 			if(score.getWin()) winCount++;
 //			System.out.println("State values for game "+ (i+1));
 //			printState(scoreList.get(i).getState());
-			System.out.println("Number of Moves: " + scoreList.get(i).getNumOfMoves());
+//			System.out.println("Number of Moves: " + score.getNumOfMoves());
 			System.out.println("Number of Wins: " + winCount);
 			erase();
-			i++;
+//			System.out.println("i: " + i);
+//			System.out.println("flags: " + flagsCount);
+			if(flagsCount > 0)
+				i++;
 		}
 
 //		printState(scoreList.get(i).getState());
 		
 //		printState(scoreList.get(scoreList.size()-1).getState());
-
+		System.out.println("This is the scores array!");
+		for(i = 0; i < scores.size(); i++){
+			System.out.println(i + ": " + scores.get(i));
+		}
+		double[][] firstTable = learner.getFirstTable();
+		System.out.println("This is the learning table");
+		for(i = 0; i < 10; i++){
+			System.out.println(firstTable[i][1] / firstTable[i][0]);
+		}
 	}
 	
 	//print the state
@@ -1120,7 +1150,7 @@ public class Minesweeper extends Applet implements Runnable {
 				
 				// left-top-corner
 				if (i == topLeft) {
-					state = tLeft;
+					state = tLeft;	
 					countNearby(i, state);
 				}
 				// left-column
@@ -1172,6 +1202,8 @@ public class Minesweeper extends Applet implements Runnable {
 				}						
 			} // IF-UNEXPOSED-STATEMENT
 		} // FOR-LOOP
+		
+//		System.out.println(flagsCount);
 	}
 		
 }

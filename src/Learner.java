@@ -282,7 +282,7 @@ public class Learner {
             if(board[pos - 1] != BOARD_FLAGGED && board[pos - 1] != BOARD_UNCHECKED && adjacent[pos - 1] > maxMine)
                 maxMine = adjacent[pos - 1];
             // same row still
-            if(board[pos + 1 != BOARD_FLAGGED && board[pos + 1] != BOARD_UNCHECKED && adjacent[pos + 1] > maxMine)
+            if(board[pos + 1] != BOARD_FLAGGED && board[pos + 1] != BOARD_UNCHECKED && adjacent[pos + 1] > maxMine)
                 maxMine = adjacent[pos + 1];
 
             // 3 below
@@ -824,5 +824,8 @@ public class Learner {
     public double[] getTable(){
     	return learningTable;
     }
-
+    
+    public double[][] getFirstTable(){
+    	return firstTable;
+    }
 }
