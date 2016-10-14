@@ -8,10 +8,10 @@
 
 import java.applet.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -551,7 +551,7 @@ public class Minesweeper extends Applet implements Runnable {
 ////				System.out.println("Simple Bot: " + score2.getWins());
 //				System.out.println("Smart Bot: " + score3.getWins());
 				// LEARNING BOT
-				learningBot();
+				learningBotSlow();
 			} else if (evt.metaDown()) {
 				if (exposed[n] == unexposed) {
 					exposed[n] = flagged;
@@ -1069,6 +1069,7 @@ public class Minesweeper extends Applet implements Runnable {
 		long totalScore = 0; 
 		int lastCheckedI = 0;
 		while (i < 10000){//learn for i number of games
+			System.out.println("Game count: " + i);
 			flagsCount = 0;
 			score = new LearningScore();
 			if(i % 1000 == 0 && lastCheckedI != i){
@@ -1139,7 +1140,7 @@ public class Minesweeper extends Applet implements Runnable {
 
 	public void learningBotSlow(){
 		int winCount;
-		long moves;
+		long totalMoves;
 		ArrayList<LearningScore> individScores;
 		int i = 0, j = 0;
 		Learner learner = new Learner(width, height, adjacent);
@@ -1148,99 +1149,128 @@ public class Minesweeper extends Applet implements Runnable {
 		LearningStats stats;
 		ArrayList <LearningStats> averages = new ArrayList <LearningStats>();
 
-		while (i < 100){ // learn for i number of games
-//			System.out.print("while");
+		while (i < 10){ // learn for i number of games
+			System.out.println("while");
 			individScores = new ArrayList<LearningScore>();
 
 			winCount = 0;
-			moves = 0;
+			totalMoves = 0;
 
 
 			// NOTE: THIS ONLY SAVES THE AVERAGES FOR THE 10000 RUNS CHANGE THIS IF YOU WANT I GUESS...
 
-			for(j = 0; j < 10000; j++){	// plays 10000 games without learning
-//				System.out.println("In J");
+			for(j = 0; j < 10; j++){	// plays 10000 games without learning
+				System.out.println("In J");
 				score = new LearningScore();
-
 				while(sadness == bored){
+					markFlags();
 					learner.setBoard(exposed);
-					int position = learner.makeTurn();
-					easyExpose(position);
-					score.incNumOfMoves();
+					int position = learner.makeFirstTurn();
+					if(exposed[position] == unexposed) {
+						easyExpose(position);
+						score.incNumOfMoves();
+					}
 					if(sadness != sad){
+//						learner.alterValues(2);
 						if(sadness == happy){
+
+							totalMoves += score.getNumOfMoves();
 							score.setWin(true);
 							score.setState(learner.getTable());
 							individScores.add(score);
 						}
 					}
 					else if(sadness == sad){
-						learner.setMoveCount(0);
+						totalMoves += score.getNumOfMoves();
+//						learner.alterValues(1);
 						score.setWin(false);
 						score.setState(learner.getTable());
 						individScores.add(score);
 					}
-				} //sadness loop
+				}//sadness loop
+
 
 				erase();
-				j++;
 			}
 
+			System.out.println("Outisde of the j loop");
+
 			for(int k = 0; k < j; k++){
+				System.out.println("K: " + k);
 				if(individScores.get(k).getWin()) winCount++;
-				moves += individScores.get(k).getNumOfMoves();
 			}
+
 			stats = new LearningStats();
-			stats.setMoves(moves);
+			stats.setMoves(totalMoves);
 			stats.setNumWins(winCount);
 			averages.add(stats);
 
 
-
 			score = new LearningScore();
 			// learns	(doesn't add this to table)
-//			System.out.println("I'm learning here");
+			System.out.println("I'm learning here");
 			while(sadness == bored){
+				markFlags();
 				learner.setBoard(exposed);
-				int position = learner.makeTurn();
-				easyExpose(position);
-				score.incNumOfMoves();
+				int position = learner.makeFirstTurn();
+				if(exposed[position] == unexposed) {
+					easyExpose(position);
+					score.incNumOfMoves();
+				}
 				if(sadness != sad){
 					learner.alterValues(2);
 					if(sadness == happy){
 						score.setWin(true);
 						score.setState(learner.getTable());
-						individScores.add(score);
 					}
 				}
 				else if(sadness == sad){
+					totalMoves += score.getNumOfMoves();
 					learner.alterValues(1);
-					learner.setMoveCount(0);
 					score.setWin(false);
 					score.setState(learner.getTable());
-					individScores.add(score);
 				}
-			} //sadness loop
+			}//sadness loop
+
 
 			erase();
 			i++;
 		}
 
 
+
+//		Path file = Paths.get("stats.txt");
+//		Files.wr;
+//
 		// here make a new text file and print all of the things
 		try {
-			PrintWriter printWriter = new PrintWriter("stats.txt", "UTF-8");
-			for(i = 0; i < averages.size(); i++)
-				printWriter.println((averages.get(i).getMoves() / j) + "\t" + averages.get(i).getNumWins());	//prints avg score, win count to file
+			FileWriter writer = new FileWriter("stats.txt");
+			for(i = 0; i < averages.size(); i++){
+				writer.write((averages.get(i).getMoves() / j) + "\t" + averages.get(i).getNumWins() + "\r\n");
+				System.out.println("moves: " + averages.get(i).getMoves() + "\t wins: " + averages.get(i).getNumWins());
+			}
+			writer.close();
 
-
-
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+
+//		try {
+//			System.out.println("Trying to print thingy here");
+//			PrintWriter printWriter = new PrintWriter("stats.txt", "UTF-8");
+//			for(i = 0; i < averages.size(); i++)
+//				printWriter.println((averages.get(i).getMoves() / j) + "\t" + averages.get(i).getNumWins());	//prints avg score, win count to file
+//
+//			printWriter.close();
+//
+//
+//
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (UnsupportedEncodingException e) {
+//			e.printStackTrace();
+//		}
 
 	}
 
