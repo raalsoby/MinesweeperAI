@@ -5,7 +5,7 @@ public class LearningScore {
 	private boolean win; // true for win and false for lost
 	private int numOfMoves;
 	private double[] state;
-	
+
 	public LearningScore(){
 		this.win = true;
 		this.numOfMoves = 0;
